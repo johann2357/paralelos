@@ -35,7 +35,7 @@ void sum(vector<vector<int>>* m1, vector<vector<int>>* m2,
   }
 }
 
-void substract(vector<vector<int>>* m1, vector<vector<int>>* m2,
+void subtract(vector<vector<int>>* m1, vector<vector<int>>* m2,
          vector<vector<int>>* result) {
   for (int i = 0; i < (*m1).size(); ++i) {
     for (int j = 0; j < (*m1).size(); ++j) {
@@ -58,7 +58,96 @@ void multiply(vector<vector<int>>* m1, vector<vector<int>>* m2,
 
 void strassen(vector<vector<int>>* m1, vector<vector<int>>* m2,
               vector<vector<int>>* result) {
+  /*
+   * SOURCE http://en.wikipedia.org/wiki/Strassen_algorithm
+  */
+  if ((*m1).size() <= 1) {
+    multiply(m1, m2, result);
+    return;
+  }
+  else {
+    int size = (*m1).size() / 2;
+    vector<int> tmp (size);
+    vector<vector<int>>
+      a11(size, tmp), a12(size, tmp), a21(size, tmp), a22(size, tmp),
+      b11(size, tmp), b12(size, tmp), b21(size, tmp), b22(size, tmp),
+      c11(size, tmp), c12(size,tmp),
+      c21(size,tmp), c22(size,tmp),
+      p1(size, tmp), p2(size, tmp), p3(size, tmp), p4(size, tmp),
+      p5(size, tmp), p6(size, tmp), p7(size, tmp),
+      result_a(size, tmp), result_b(size, tmp);
 
+    /*
+     * CALCULATING THE SPLIT
+     * STORED IN As and Bs
+    */
+    for (int i = 0; i < size; ++i) {
+      for (int j = 0; j < size; ++j) {
+        a11[i][j] = (*m1)[i][j];
+        b11[i][j] = (*m2)[i][j];
+        a12[i][j] = (*m1)[i][j + size];
+        b12[i][j] = (*m2)[i][j + size];
+        a21[i][j] = (*m1)[i + size][j];
+        b21[i][j] = (*m2)[i + size][j];
+        a22[i][j] = (*m1)[i + size][j + size];
+        b22[i][j] = (*m2)[i + size][j + size];
+      }
+    }
+
+
+    /*
+     * CALCULATING M1 - M7 (IN ORDER)
+     * NAMED P1 - P7 TO AVOID CONFUSION WITH THE FUNCTION PARAMETERS
+    */
+    sum(&a11, &a22, &result_a);
+    sum(&b11, &b22, &result_b);
+    strassen(&result_a, &result_b, &p1); // (a11 + a22) * (b11 + b22)
+
+    sum(&a21, &a22, &result_a);
+    strassen(&result_a, &b11, &p2); // (a21 + a22) * (b11)
+
+    subtract(&b12, &b22, &result_b);
+    strassen(&a11, &result_b, &p3); // (a11) * (b12 - b22)
+
+    subtract(&b21, &b11, &result_b);
+    strassen(&a22, &result_b, &p4); // (a22) * (b21 - b11)
+
+    sum(&a11, &a12, &result_a);
+    strassen(&result_a, &b22, &p5); // (a11 + a12) * (b22)
+
+    subtract(&a21, &a11, &result_a);
+    sum(&b11, &b12, &result_b);
+    strassen(&result_a, &result_b, &p6); // (a21 - a11) * (b11 + b12)
+
+    subtract(&a12, &a22, &result_a);
+    sum(&b21, &b22, &result_b);
+    strassen(&result_a, &result_b, &p7); // (a12 - a22) * (b21 + b22)
+
+
+    /*
+     * CALCULATING Cs
+    */
+    sum(&p1, &p4, &result_a);
+    sum(&result_a, &p7, &result_b);
+    subtract(&result_b, &p5, &c11); // p1 + p4 - p5 + p7
+
+    sum(&p3, &p5, &c12); // p3 + p5
+
+    sum(&p2, &p4, &c21); // p2 + p4
+
+    sum(&p1, &p3, &result_a);
+    sum(&result_a, &p6, &result_b);
+    subtract(&result_b, &p2, &c22); // p1 + p3 - p2 + p6
+
+    for (int i = 0; i < size ; i++) {
+      for (int j = 0 ; j < size ; j++) {
+        (*result)[i][j] = c11[i][j];
+        (*result)[i][j + size] = c12[i][j];
+        (*result)[i + size][j] = c21[i][j];
+        (*result)[i + size][j + size] = c22[i][j];
+      }
+    }
+  }
 }
 
 void print_matrix(vector<vector<int>>* m) {
@@ -80,10 +169,18 @@ void generate_random(vector<vector<int>>* m, int rows, int cols) {
 }
 
 int main() {
-  vector<vector<int>> test;
-  generate_random(&test, 3, 5);
-  print_matrix(&test);
-  cout << endl;
-  normalize(&test);
-  print_matrix(&test);
+  vector<vector<int>> m1;
+  generate_random(&m1, 2, 2);
+  normalize(&m1);
+  print_matrix(&m1);
+
+  vector<vector<int>> m2;
+  generate_random(&m2, 2, 2);
+  normalize(&m2);
+  print_matrix(&m2);
+
+  vector<int> tmp(2);
+  vector<vector<int>> result(2, tmp);
+  strassen(&m1, &m2, &result);
+  print_matrix(&result);
 }
