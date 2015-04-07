@@ -2,15 +2,17 @@
 #include <vector>
 #include <algorithm>
 #include <cstdlib>
+#include <ctime>
 #include <math.h>
 #include <stdlib.h>
 #include <pthread.h>
+
 
 using namespace std;
 
 
 #define MAX_RAND_NUMBER 10
-#define NTHREADS 4
+#define NTHREADS 3
 
 
 #ifdef NTHREADS
@@ -97,7 +99,7 @@ void subtract(vector<vector<int>>* m1, vector<vector<int>>* m2,
       (*result)[i][j] = (*m1)[i][j] - (*m2)[i][j];
 }
 /**
- * END OF PARALLEL STUFF
+ * END OF NON PARALLEL STUFF
 **/
 #endif
 
@@ -239,18 +241,43 @@ void generate_random(vector<vector<int>>* m, int rows, int cols) {
 }
 
 int main() {
+  srand(time(0));
+
+  int m1_rows, m1_cols, m2_rows, m2_cols;
+
+  cout << "Matrix 1 rows: ";
+  cin >> m1_rows;
+  cout << "Matrix 1 cols: ";
+  cin >> m1_cols;
+
+  cout << "Matrix 2 rows: ";
+  cin >> m2_rows;
+  cout << "Matrix 2 cols: ";
+  cin >> m2_cols;
+
+  if (m1_cols != m2_rows) {
+    cout << "Cannot multiply!!\n";
+    return 1;
+  }
+
+  int result_rows_cols = max(max(m1_rows, m2_rows), max(m1_cols, m2_cols));
+
+  cout << "MATRIX 1:\n" ;
   vector<vector<int>> m1;
-  generate_random(&m1, 2, 2);
+  generate_random(&m1, m1_rows, m1_cols);
   normalize(&m1);
   print_matrix(&m1);
 
+  cout << "MATRIX 2:\n" ;
   vector<vector<int>> m2;
-  generate_random(&m2, 2, 2);
+  generate_random(&m2, m2_rows, m2_cols);
   normalize(&m2);
   print_matrix(&m2);
 
-  vector<int> tmp(2);
-  vector<vector<int>> result(2, tmp);
+  cout << "RESULT:\n" ;
+  vector<int> tmp(result_rows_cols);
+  vector<vector<int>> result(result_rows_cols, tmp);
+  normalize(&result);
   strassen(&m1, &m2, &result);
   print_matrix(&result);
 }
