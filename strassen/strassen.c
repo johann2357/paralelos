@@ -4,12 +4,102 @@
 #include <cstdlib>
 #include <math.h>
 #include <stdlib.h>
+#include <pthread.h>
 
 using namespace std;
 
 
-#define MAX_NUMBER 100
+#define MAX_RAND_NUMBER 10
+#define NTHREADS 4
 
+
+#ifdef NTHREADS
+/**
+ * BEGIN OF PARALLEL STUFF
+**/
+struct ParallelData {
+  vector<vector<int>> *m1, *m2, *result;
+  int begin, end;
+};
+
+void* parallel_sum(void *pd) {
+  ParallelData* data = (ParallelData*)pd;
+  for (int i = (*data).begin; i < (*data).end; ++i)
+    for (int j = 0; j < (*(*data).m1).size(); ++j)
+      (*(*data).result)[i][j] = (*(*data).m1)[i][j] + (*(*data).m2)[i][j];
+}
+
+void* parallel_subtract(void *pd) {
+  ParallelData* data = (ParallelData*)pd;
+  for (int i = (*data).begin; i < (*data).end; ++i)
+    for (int j = 0; j < (*(*data).m1).size(); ++j)
+      (*(*data).result)[i][j] = (*(*data).m1)[i][j] - (*(*data).m2)[i][j];
+}
+
+void distribution(vector<vector<int>>* m1, vector<vector<int>>* m2,
+                  vector<vector<int>>* result, void* (*operation)(void*)) {
+  pthread_t* thread_id = new pthread_t[NTHREADS];
+  ParallelData* thread_data = new ParallelData[NTHREADS];
+  int begin = 0;
+  int end = 0;
+  int chunk_size = (*m1).size() / NTHREADS;
+  for(int i = 0; ((i < NTHREADS) && (end < (*m1).size())); ++i) {
+    if (i == NTHREADS - 1)
+      end = (*m1).size();
+    else
+      end = begin + chunk_size;
+    thread_data[i].m1 = m1;
+    thread_data[i].m2 = m2;
+    thread_data[i].result = result;
+    thread_data[i].begin = begin;
+    thread_data[i].end = end;
+    pthread_create(
+      &thread_id[i],
+      NULL,
+      *operation,
+      (void *) &thread_data[i]
+    );
+    end = begin + chunk_size;
+    begin = end;
+  }
+  for(int j = 0; j < NTHREADS; ++j)
+    pthread_join(thread_id[j], NULL);
+  delete[] thread_id;
+  delete[] thread_data;
+}
+
+void sum(vector<vector<int>>* m1, vector<vector<int>>* m2,
+         vector<vector<int>>* result) {
+  distribution(m1, m2, result, &parallel_sum);
+}
+void subtract(vector<vector<int>>* m1, vector<vector<int>>* m2,
+         vector<vector<int>>* result) {
+  distribution(m1, m2, result, &parallel_subtract);
+}
+/**
+ * END OF PARALLEL STUFF
+**/
+#else
+/**
+ * BEGIN OF NON PARALLEL STUFF
+**/
+void sum(vector<vector<int>>* m1, vector<vector<int>>* m2,
+         vector<vector<int>>* result) {
+  for (int i = 0; i < (*m1).size(); ++i)
+    for (int j = 0; j < (*m1).size(); ++j)
+      (*result)[i][j] = (*m1)[i][j] + (*m2)[i][j];
+}
+
+void subtract(vector<vector<int>>* m1, vector<vector<int>>* m2,
+         vector<vector<int>>* result) {
+  for (int i = 0; i < (*m1).size(); ++i)
+    for (int j = 0; j < (*m1).size(); ++j)
+      (*result)[i][j] = (*m1)[i][j] - (*m2)[i][j];
+}
+/**
+ * END OF PARALLEL STUFF
+**/
+#endif
 
 void normalize(vector<vector<int>>* m) {
   double total_row = pow(2.0, ceil(log2((*m)[0].size())));
@@ -24,26 +114,6 @@ void normalize(vector<vector<int>>* m) {
   for (int i = 0; i < to_fill_column; ++i)
     (*m).push_back(tmp);
 }
-
-
-void sum(vector<vector<int>>* m1, vector<vector<int>>* m2,
-         vector<vector<int>>* result) {
-  for (int i = 0; i < (*m1).size(); ++i) {
-    for (int j = 0; j < (*m1).size(); ++j) {
-      (*result)[i][j] = (*m1)[i][j] + (*m2)[i][j];
-    }
-  }
-}
-
-void subtract(vector<vector<int>>* m1, vector<vector<int>>* m2,
-         vector<vector<int>>* result) {
-  for (int i = 0; i < (*m1).size(); ++i) {
-    for (int j = 0; j < (*m1).size(); ++j) {
-      (*result)[i][j] = (*m1)[i][j] - (*m2)[i][j];
-    }
-  }
-}
-
 
 void multiply(vector<vector<int>>* m1, vector<vector<int>>* m2,
               vector<vector<int>>* result) {
@@ -163,7 +233,7 @@ void generate_random(vector<vector<int>>* m, int rows, int cols) {
     vector<int> tmp(cols);
     generate(tmp.begin(), tmp.end(), rand);
     for (auto &n: tmp)
-      n = n % MAX_NUMBER;
+      n = n % MAX_RAND_NUMBER;
     (*m).push_back(tmp);
   }
 }
