@@ -6,6 +6,9 @@
 #include <math.h>
 #include <stdlib.h>
 #include <pthread.h>
+#include <chrono>
+#include <random>
+#include <time.h>
 
 
 using namespace std;
@@ -278,6 +281,12 @@ int main() {
   vector<int> tmp(result_rows_cols);
   vector<vector<int>> result(result_rows_cols, tmp);
   normalize(&result);
+
+
+  std::chrono::steady_clock::time_point t1 = std::chrono::steady_clock::now();
   strassen(&m1, &m2, &result);
+  std::chrono::steady_clock::time_point t2 = std::chrono::steady_clock::now();
+  std::cout << "It took me " <<  std::chrono::duration_cast<std::chrono::milliseconds> (t2 - t1).count() << " milliseconds.\n";
+
   print_matrix(&result);
 }
