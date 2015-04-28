@@ -9,7 +9,7 @@
 #include <time.h>
 #include <string.h>
 #include <math.h>
-//#include <mpi.h>
+#include <mpi.h>
 #include "graphics.h"
 #include <X11/Xlib.h>
 
@@ -42,9 +42,9 @@ int main(int argc, char *argv[]) {
   int q, comm_sz, my_rank;
   my_rank = 0;
 
-  //MPI_Init(NULL, NULL);
-  //MPI_Comm_size(MPI_COMM_WORLD, &comm_sz);
-  //MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
+  MPI_Init(NULL, NULL);
+  MPI_Comm_size(MPI_COMM_WORLD, &comm_sz);
+  MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
 
   if (my_rank == 0) {
 
@@ -134,7 +134,7 @@ int main(int argc, char *argv[]) {
     //calculate_iteration(game.start, game.end);
   }
 
-  //MPI_Finalize();
+  MPI_Finalize();
   return 0;
 }
 
