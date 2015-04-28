@@ -13,8 +13,8 @@
 
 #define NI 500       /* array sizes */
 #define NJ 500
-#define NSTEPS 10    /* number of time steps */
-#define MAXRAND 1111
+#define NSTEPS 100    /* number of time steps */
+#define MAXRAND 1000
 
 void calculate_iteration(int*** old, int*** new);
 void print_iteration(int*** old);
@@ -49,7 +49,7 @@ int main(int argc, char *argv[]) {
   for (i = 1; i <= NI; i++){
     for (j = 1; j <= NJ; j++){
       r = rand() % MAXRAND;
-      if (r < 1){
+      if (r < 100){
 	old[i][j] = 1;
       } else {
 	old[i][j] = 0;
@@ -115,8 +115,11 @@ void calculate_iteration(int*** old, int*** new) {
              (*old)[ip][jm];
 
       switch(nsum){
-        case 3 || 2:
+        case 3:
           (*new)[i][j] = 1;
+        break;
+        case 2:
+          (*new)[i][j] = (*old)[i][j];
         break;
         default:
           (*new)[i][j] = 0;
