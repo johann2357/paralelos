@@ -54,6 +54,7 @@ int main(int argc, char *argv[]) {
     gm = X11_640x480;
     initgraph (&gd, &gm, "");
     setbkcolor(BLACK);
+    setcolor(WHITE);
     cleardevice();
 
     /* Initialize random */
@@ -98,6 +99,8 @@ int main(int argc, char *argv[]) {
       //}
       calculate_iteration(1, NI);
 
+      cleardevice();
+
       // THESE SHOULD BE AWESOME WITH GPU
       for(i = 0; i < NTHREADS; i++) {
         from_to = malloc(2 * sizeof(int));
@@ -120,10 +123,10 @@ int main(int argc, char *argv[]) {
         }
       }
 
-      // struct timespec tim, tim2;
-      // tim.tv_sec = 1;
-      // tim.tv_nsec = 100000000L;
-      // nanosleep(&tim , &tim2);
+      struct timespec tim, tim2;
+      tim.tv_sec = 1;
+      tim.tv_nsec = 100000000L;
+      nanosleep(&tim , &tim2);
     }
     if (getch() == KEY_ESC) {
       closegraph();
@@ -178,8 +181,6 @@ void* print_iteration(void* data){
     for(i = from_to[0] + 1; i <= from_to[1] + 1; i++){
       if (game.old[i][j]) {
         putpixel(i, j, WHITE);
-      } else {
-        putpixel(i, j, BLACK);
       }
     }
   }
